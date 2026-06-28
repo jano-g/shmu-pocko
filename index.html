@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predpoveď počasia · SHMÚ ALADIN</title>
+<style>
+  :root{
+    --bg:#0c1222; --bg2:#131c33; --card:#192443; --card2:#1f2c52;
+    --line:#2a3a63; --txt:#eaf0ff; --muted:#8da2cc; --accent:#5b9dff;
+    --warm:#ffb347; --cool:#6fc4ff; --rain:#4aa3ff; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#1b2a52 0%,var(--bg) 55%) fixed;
+    color:var(--txt); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:24px 18px 60px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
+  .brand{display:flex; align-items:center; gap:12px}
+  .brand h1{font-size:20px; margin:0; font-weight:650; letter-spacing:.2px}
+  .brand .sub{color:var(--muted); font-size:12.5px; margin-top:2px}
+  .logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+        background:linear-gradient(140deg,#5b9dff,#7b6cff);font-size:20px;box-shadow:var(--shadow)}
+  .meta{text-align:right; font-size:12px; color:var(--muted); line-height:1.5}
+  .meta b{color:var(--txt); font-weight:600}
+
+  .cities{display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 22px}
+  .chip{border:1px solid var(--line); background:var(--card); color:var(--muted);
+        padding:8px 14px; border-radius:999px; cursor:pointer; font-size:13.5px; transition:.15s; white-space:nowrap}
+  .chip:hover{border-color:var(--accent); color:var(--txt)}
+  .chip.active{background:linear-gradient(140deg,#5b9dff,#7b6cff); color:#fff; border-color:transparent; box-shadow:var(--shadow)}
+
+  .now{display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:20px}
+  @media(max-width:760px){.now{grid-template-columns:1fr}}
+  .card{background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid var(--line);
+        border-radius:20px; padding:22px; box-shadow:var(--shadow)}
+  .nowmain{display:flex; align-items:center; gap:22px}
+  .nowmain .ico{font-size:74px; line-height:1; filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+  .nowmain .temp{font-size:64px; font-weight:680; line-height:1}
+  .nowmain .desc{color:var(--muted); font-size:15px; margin-top:6px; text-transform:capitalize}
+  .nowmain .place{font-size:13px; color:var(--muted); margin-bottom:2px}
+
+  .stats{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-content:center}
+  .stat{display:flex; align-items:center; gap:12px}
+  .stat .k{font-size:22px; width:30px; text-align:center}
+  .stat .v{font-size:17px; font-weight:600}
+  .stat .l{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px}
+
+  h2{font-size:14px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:26px 4px 12px}
+  .hourly{display:flex; gap:10px; overflow-x:auto; padding:4px 2px 14px; scroll-snap-type:x mandatory}
+  .hourly::-webkit-scrollbar{height:8px}
+  .hourly::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px}
+  .hr{flex:0 0 auto; width:78px; background:var(--card); border:1px solid var(--line);
+      border-radius:15px; padding:12px 8px; text-align:center; scroll-snap-align:start}
+  .hr .t{font-size:12px; color:var(--muted)}
+  .hr .i{font-size:26px; margin:7px 0 4px}
+  .hr .tp{font-size:18px; font-weight:650}
+  .hr .w{font-size:11px; color:var(--muted); margin-top:6px}
+  .hr .p{font-size:11px; color:var(--rain); margin-top:3px; min-height:14px}
+  .hr.dnew{border-color:var(--accent)}
+
+  .days{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px}
+  .day{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+  .day .d{font-size:13px; color:var(--muted); text-transform:capitalize}
+  .day .row{display:flex; align-items:center; justify-content:space-between; margin-top:8px}
+  .day .i{font-size:32px}
+  .day .hi{font-size:20px; font-weight:680}
+  .day .lo{font-size:15px; color:var(--muted)}
+  .day .ex{font-size:11.5px; color:var(--muted); margin-top:8px; display:flex; gap:12px; flex-wrap:wrap}
+
+  .foot{margin-top:30px; color:var(--muted); font-size:11.5px; text-align:center; line-height:1.7}
+  .foot a{color:var(--accent); text-decoration:none}
+  .spin{display:inline-block; width:14px;height:14px; border:2px solid var(--line);
+        border-top-color:var(--accent); border-radius:50%; animation:s 1s linear infinite; vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .banner{background:#3a1f24; border:1px solid #7a3340; color:#ffd7dc; padding:12px 16px;
+           border-radius:12px; margin-bottom:16px; font-size:13.5px; display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">⛅</div>
+      <div>
+        <h1>Predpoveď počasia</h1>
+        <div class="sub">SHMÚ · model ALADIN 4.5&nbsp;km</div>
+      </div>
+    </div>
+    <div class="meta" id="meta"><span class="spin"></span> načítavam…</div>
+  </header>
+
+  <div class="banner" id="banner"></div>
+  <div class="cities" id="cities"></div>
+
+  <div class="now">
+    <div class="card">
+      <div class="place" id="nowPlace"></div>
+      <div class="nowmain">
+        <div class="ico" id="nowIcon">⏳</div>
+        <div>
+          <div class="temp" id="nowTemp">–</div>
+          <div class="desc" id="nowDesc"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card stats" id="nowStats"></div>
+  </div>
+
+  <h2>Hodinová predpoveď</h2>
+  <div class="hourly" id="hourly"></div>
+
+  <h2>Najbližšie dni</h2>
+  <div class="days" id="days"></div>
+
+  <div class="foot">
+    Dáta: <a href="https://opendata.shmu.sk/meteorology/weather/nwp/aladin/sk/4.5km" target="_blank" rel="noopener">SHMÚ Open Data — ALADIN 4.5 km</a>
+    · čas v stredoeurópskom letnom čase (CEST) · stránka sa automaticky obnovuje každú hodinu
+    <div id="footRun"></div>
+  </div>
+</div>
+
+<script>
+const COND_SK = {
+  clear:"jasno", partly:"polojasno", cloudy:"oblačno", overcast:"zamračené",
+  showers:"prehánky", rain:"dážď", thunderstorm:"búrky"
+};
+const DAYS_SK = ["nedeľa","pondelok","utorok","streda","štvrtok","piatok","sobota"];
+const MONTHS_SK = ["jan","feb","mar","apr","máj","jún","júl","aug","sep","okt","nov","dec"];
+
+let DATA = null, current = 0;
+
+function fmtTime(epoch){ // epoch is UTC seconds; display in CEST (UTC+2)
+  const d = new Date((epoch + 2*3600) * 1000);
+  return String(d.getUTCHours()).padStart(2,"0") + ":00";
+}
+function dayKey(epoch){ const d = new Date((epoch+2*3600)*1000); return d.getUTCFullYear()+"-"+d.getUTCMonth()+"-"+d.getUTCDate(); }
+function dayLabel(epoch){ const d=new Date((epoch+2*3600)*1000); return DAYS_SK[d.getUTCDay()]+" "+d.getUTCDate()+". "+MONTHS_SK[d.getUTCMonth()]; }
+
+async function load(){
+  try{
+    const r = await fetch("/api/forecast", {cache:"no-store"});
+    if(r.status === 503){
+      const j = await r.json().catch(()=>({error:"načítavam…"}));
+      document.getElementById("meta").innerHTML = '<span class="spin"></span> '+ (j.error||"načítavam…");
+      setTimeout(load, 4000); return;
+    }
+    DATA = await r.json();
+    document.getElementById("banner").style.display = "none";
+    render();
+  }catch(e){
+    const b = document.getElementById("banner");
+    b.style.display="block"; b.textContent = "Nepodarilo sa načítať dáta zo servera. Skontroluj, či beží forecast_server.py.";
+    document.getElementById("meta").textContent = "chyba spojenia";
+    setTimeout(load, 10000);
+  }
+}
+
+function render(){
+  if(!DATA || !DATA.cities.length) return;
+  // city chips
+  const cc = document.getElementById("cities"); cc.innerHTML="";
+  DATA.cities.forEach((c,i)=>{
+    const el=document.createElement("div");
+    el.className="chip"+(i===current?" active":"");
+    el.textContent=c.name;
+    el.onclick=()=>{current=i; render();};
+    cc.appendChild(el);
+  });
+
+  const city = DATA.cities[current];
+  const h = city.hours;
+  // pick "now" = first hour >= current real time, else first
+  const nowEp = Date.now()/1000;
+  let idx = h.findIndex(x => x.t >= nowEp - 1800);
+  if(idx<0) idx=0;
+  const cur = h[idx];
+
+  document.getElementById("nowPlace").textContent = city.name;
+  document.getElementById("nowIcon").textContent = cur.icon;
+  document.getElementById("nowTemp").textContent = Math.round(cur.temp)+"°";
+  document.getElementById("nowDesc").textContent = COND_SK[cur.cond]||cur.cond;
+
+  const dirName = ["S","SV","V","JV","J","JZ","Z","SZ"][Math.round(cur.dir/45)%8];
+  document.getElementById("nowStats").innerHTML = [
+    ["💨", cur.wind+" km/h", "vietor "+dirName],
+    ["🌬️", cur.gust+" km/h", "nárazy"],
+    ["💧", cur.precip+" mm", "zrážky / h"],
+    ["☁️", cur.cloud+" %", "oblačnosť"],
+    ["🔻", cur.pressure+" hPa", "tlak"],
+    ["⚡", cur.cape+" J/kg", "CAPE"],
+  ].map(s=>`<div class="stat"><div class="k">${s[0]}</div><div><div class="v">${s[1]}</div><div class="l">${s[2]}</div></div></div>`).join("");
+
+  // hourly (next 36 from idx)
+  const hb = document.getElementById("hourly"); hb.innerHTML="";
+  let lastDay=null;
+  h.slice(idx, idx+37).forEach(x=>{
+    const dk=dayKey(x.t); const isNew = dk!==lastDay; lastDay=dk;
+    const el=document.createElement("div");
+    el.className="hr"+(isNew?" dnew":"");
+    el.innerHTML=`<div class="t">${isNew?dayLabel(x.t).split(" ")[0].slice(0,2)+" ":""}${fmtTime(x.t)}</div>
+      <div class="i">${x.icon}</div>
+      <div class="tp">${Math.round(x.temp)}°</div>
+      <div class="p">${x.precip>0.05?("💧"+x.precip):""}</div>
+      <div class="w">${Math.round(x.wind)} km/h</div>`;
+    hb.appendChild(el);
+  });
+
+  // daily aggregation
+  const groups={};
+  h.forEach(x=>{ (groups[dayKey(x.t)] ||= []).push(x); });
+  const db=document.getElementById("days"); db.innerHTML="";
+  Object.values(groups).forEach(arr=>{
+    const hi=Math.max(...arr.map(a=>a.temp)), lo=Math.min(...arr.map(a=>a.temp));
+    const psum=arr.reduce((s,a)=>s+a.precip,0);
+    const wmax=Math.max(...arr.map(a=>a.gust));
+    // representative midday icon
+    const mid=arr.reduce((b,a)=> Math.abs(((a.t+2*3600)/3600%24)-13) < Math.abs(((b.t+2*3600)/3600%24)-13)?a:b, arr[0]);
+    const el=document.createElement("div"); el.className="day";
+    el.innerHTML=`<div class="d">${dayLabel(arr[0].t)}</div>
+      <div class="row"><div class="i">${mid.icon}</div>
+        <div><span class="hi">${Math.round(hi)}°</span> <span class="lo">${Math.round(lo)}°</span></div></div>
+      <div class="ex"><span>💧 ${psum.toFixed(1)} mm</span><span>🌬️ ${Math.round(wmax)} km/h</span></div>`;
+    db.appendChild(el);
+  });
+
+  // meta
+  const run = DATA.run;
+  const runStr = `${run.date.slice(6,8)}.${run.date.slice(4,6)}. ${run.time.slice(0,2)}:00 UTC`;
+  const gen = new Date(DATA.generated*1000);
+  document.getElementById("meta").innerHTML =
+    `model run: <b>${runStr}</b><br>aktualizované ${gen.toLocaleTimeString("sk-SK",{hour:"2-digit",minute:"2-digit"})}`;
+  document.getElementById("footRun").textContent =
+    `Behová iterácia modelu: ${runStr} · ${city.hours.length} hodín predpovede`;
+}
+
+load();
+// auto-refresh every hour
+setInterval(load, 3600*1000);
+// also re-render every 10 min so the "now" marker advances
+setInterval(()=>{ if(DATA) render(); }, 600*1000);
+</script>
+</body>
+</html>

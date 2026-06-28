@@ -1,0 +1,14 @@
+# Downloaded GRIB data cache (regenerated at runtime)
+.grib_cache/
+
+# Local machine info / runtime artifacts — never publish
+PATH_backup.txt
+server.log
+resp.json
+*.part
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
